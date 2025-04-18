@@ -1,6 +1,20 @@
-# dev
+# Alysoft Finances
 
-A new Flutter project.
+Projeto Flutter de finanças com suporte a Web, Android e iOS.
+
+Tela de login multilíngue (English/Português).
+
+## Estrutura
+
+- dev/: código fonte Flutter
+- docs/: documentos do projeto
+
+## Executar localmente
+
+```bash
+cd dev
+flutter run -d chrome
+```
 
 ## Getting Started
 
