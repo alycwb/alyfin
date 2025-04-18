@@ -41,11 +41,13 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     final strings = localizedStrings[_lang]!;
     return MaterialApp(
-      // Removed global theme override; hover effect applied locally
+      theme: ThemeData(primarySwatch: Colors.grey),
       debugShowCheckedModeBanner: false,
       title: 'Alysoft Finances',
       home: Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
+          backgroundColor: Colors.white,
           centerTitle: true,
           title: Text('Alysoft Finances'),
           leading: IconButton(
@@ -80,7 +82,7 @@ class _MyAppState extends State<MyApp> {
                     }).toList();
                   },
                   underline: const SizedBox(),
-                  dropdownColor: Colors.blue,
+                  dropdownColor: Colors.grey[200],
                   onChanged: (Language? newLang) {
                     if (newLang != null) setState(() => _lang = newLang);
                   },
@@ -129,9 +131,14 @@ class _MyAppState extends State<MyApp> {
                     decoration: InputDecoration(labelText: strings['password']),
                     obscureText: true,
                   ),
+                  const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
+                      style: ButtonStyle(
+                        foregroundColor: MaterialStateProperty.all(Colors.black),
+                        overlayColor: MaterialStateProperty.all(Colors.grey.shade200),
+                      ),
                       onPressed: () {},
                       child: Text(strings['forgot_password']!),
                     ),
@@ -139,11 +146,27 @@ class _MyAppState extends State<MyApp> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[800],
+                      foregroundColor: Colors.white,
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                     child: Text(strings['login']!),
                   ),
-                  OutlinedButton(
-                    onPressed: () {},
-                    child: Text(strings['signup']!),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton(
+                      style: ButtonStyle(
+                        foregroundColor: MaterialStateProperty.all(Colors.black),
+                        overlayColor: MaterialStateProperty.all(Colors.grey.shade200),
+                      ),
+                      onPressed: () {},
+                      child: Text(strings['signup']!),
+                    ),
                   ),
                 ],
               ),
