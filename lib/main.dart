@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'pages/categories_page.dart';
+import 'pages/types_page.dart';
+import 'pages/expenses_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: 'https://wqbnjtyxhvucsbsflxcq.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxYm5qdHl4aHZ1Y3Nic2ZseGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNzg0MTUsImV4cCI6MjA2MDY1NDQxNX0.xXb6u0pcXw1HOzvxD9R37hWqLzerUB57tbHsuMZqI4Q',
+  );
   runApp(const MyApp());
 }
 
@@ -13,8 +22,36 @@ final localizedStrings = {
     'password': 'Password',
     'forgot_password': 'Forgot Password?',
     'login': 'Login',
+    'pricing': 'Pricing',
+    'features': 'Features',
+    'enterprise': 'Enterprise',
     'signup': 'Sign Up',
     'username': 'User',
+    'name': 'Name',
+    'dashboard': 'Dashboard',
+    'expenses': 'Expenses',
+    'expense_type': 'Expense Type',
+    'expense_category': 'Expense Category',
+    'logout': 'Logout',
+    'cancel': 'Cancel',
+    'save': 'Save',
+    'add': 'Add',
+    'delete': 'Delete',
+    'new_category': 'New Category',
+    'edit_category': 'Edit Category',
+    'delete_category': 'Delete Category',
+    'new_type': 'New Type',
+    'edit_type': 'Edit Type',
+    'delete_type': 'Delete Type',
+    'new_expense': 'New Expense',
+    'edit_expense': 'Edit Expense',
+    'delete_expense': 'Delete Expense',
+    'description': 'Description',
+    'amount': 'Amount',
+    'category': 'Category',
+    'type': 'Type',
+    'expense_date': 'Expense Date',
+    'effective_date': 'Effective Date',
   },
   Language.pt: {
     'title': 'Entrar',
@@ -22,8 +59,36 @@ final localizedStrings = {
     'password': 'Senha',
     'forgot_password': 'Esqueceu a senha?',
     'login': 'Entrar',
+    'pricing': 'Preços',
+    'features': 'Recursos',
+    'enterprise': 'Empresarial',
     'signup': 'Cadastrar-se',
     'username': 'Usuário',
+    'name': 'Nome',
+    'dashboard': 'Dashboard',
+    'expenses': 'Gastos',
+    'expense_type': 'Tipo do Gasto',
+    'expense_category': 'Categoria do Gasto',
+    'logout': 'Sair',
+    'cancel': 'Cancelar',
+    'save': 'Salvar',
+    'add': 'Adicionar',
+    'delete': 'Excluir',
+    'new_category': 'Nova Categoria',
+    'edit_category': 'Editar Categoria',
+    'delete_category': 'Excluir Categoria',
+    'new_type': 'Novo Tipo',
+    'edit_type': 'Editar Tipo',
+    'delete_type': 'Excluir Tipo',
+    'new_expense': 'Nova Despesa',
+    'edit_expense': 'Editar Despesa',
+    'delete_expense': 'Excluir Despesa',
+    'description': 'Descrição',
+    'amount': 'Valor',
+    'category': 'Categoria',
+    'type': 'Tipo',
+    'expense_date': 'Data da Despesa',
+    'effective_date': 'Data Efetiva',
   },
 };
 
@@ -36,6 +101,59 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Language _lang = Language.en;
+  bool _loggedIn = false;
+  final TextEditingController _loginEmailController = TextEditingController();
+  final TextEditingController _loginPasswordController = TextEditingController();
+
+  Future<void> _showSignUpDialog(BuildContext context) async {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (context) {
+        final s = localizedStrings[_lang]!;
+        return AlertDialog(
+          title: Text(s['signup']!),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(controller: nameController, decoration: InputDecoration(labelText: s['name']!)),
+                const SizedBox(height: 8),
+                TextField(controller: emailController, decoration: InputDecoration(labelText: s['email']!)),
+                const SizedBox(height: 8),
+                TextField(controller: passwordController, decoration: InputDecoration(labelText: s['password']!), obscureText: true),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await Supabase.instance.client.auth.signUp(
+                    email: emailController.text,
+                    password: passwordController.text,
+                    data: {'full_name': nameController.text},
+                  );
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Registration successful, check your email')),
+                  );
+                } catch (error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(error.toString())),
+                  );
+                }
+              },
+              child: Text(s['signup']!),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,15 +163,129 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       title: 'Alysoft Finances',
       home: Scaffold(
+        drawer: Drawer(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          width: 150,
+          child: Container(
+            color: Colors.grey[900],
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                const SizedBox(height: 16),
+                Builder(
+                  builder: (context) {
+                    final s = localizedStrings[_lang]!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_loggedIn) ...[
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              overlayColor: Colors.grey.shade300,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(s['dashboard']!),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              overlayColor: Colors.grey.shade300,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => ExpensesPage(lang: _lang)));
+                            },
+                            child: Text(s['expenses']!),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              overlayColor: Colors.grey.shade300,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => TypesPage(lang: _lang)));
+                            },
+                            child: Text(s['expense_type']!),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              overlayColor: Colors.grey.shade300,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => CategoriesPage(lang: _lang)));
+                            },
+                            child: Text(s['expense_category']!),
+                          ),
+                          const Divider(color: Colors.grey),
+                        ],
+                        for (final key in _loggedIn
+                            ? ['pricing', 'features', 'enterprise']
+                            : ['login', 'pricing', 'features', 'enterprise'])
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              overlayColor: Colors.grey.shade300,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(s[key]!),
+                          ),
+                        if (_loggedIn) ...[
+                          const Divider(color: Colors.grey),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              overlayColor: Colors.grey.shade300,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await Supabase.instance.client.auth.signOut();
+                              setState(() => _loggedIn = false);
+                            },
+                            child: Text(s['logout']!),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
         backgroundColor: Colors.white,
         appBar: AppBar(
+          iconTheme: const IconThemeData(color: Colors.black),
           backgroundColor: Colors.white,
           centerTitle: true,
           title: Text('Alysoft Finances'),
-          leading: IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {},
-          ),
           actions: [
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -114,65 +346,85 @@ class _MyAppState extends State<MyApp> {
             const SizedBox(width: 8),
           ],
         ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    decoration: InputDecoration(labelText: strings['email']),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    decoration: InputDecoration(labelText: strings['password']),
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      style: ButtonStyle(
-                        foregroundColor: MaterialStateProperty.all(Colors.black),
-                        overlayColor: MaterialStateProperty.all(Colors.grey.shade200),
-                      ),
-                      onPressed: () {},
-                      child: Text(strings['forgot_password']!),
+        body: _loggedIn
+            ? Container()
+            : Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: _loginEmailController,
+                          decoration: InputDecoration(labelText: strings['email']),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _loginPasswordController,
+                          decoration: InputDecoration(labelText: strings['password']),
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            style: ButtonStyle(
+                              foregroundColor: MaterialStateProperty.all(Colors.black),
+                              overlayColor: MaterialStateProperty.all(Colors.grey.shade200),
+                            ),
+                            onPressed: () {},
+                            child: Text(strings['forgot_password']!),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () async {
+                            try {
+                              await Supabase.instance.client.auth.signInWithPassword(
+                                email: _loginEmailController.text,
+                                password: _loginPasswordController.text,
+                              );
+                              setState(() => _loggedIn = true);
+                            } catch (error) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(error.toString())),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[800],
+                            foregroundColor: Colors.white,
+                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(strings['login']!),
+                        ),
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Builder(
+                            builder: (innerContext) {
+                              return TextButton(
+                                style: ButtonStyle(
+                                  foregroundColor: MaterialStateProperty.all(Colors.black),
+                                  overlayColor: MaterialStateProperty.all(Colors.grey.shade200),
+                                ),
+                                onPressed: () => _showSignUpDialog(innerContext),
+                                child: Text(strings['signup']!),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[800],
-                      foregroundColor: Colors.white,
-                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(strings['login']!),
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: TextButton(
-                      style: ButtonStyle(
-                        foregroundColor: MaterialStateProperty.all(Colors.black),
-                        overlayColor: MaterialStateProperty.all(Colors.grey.shade200),
-                      ),
-                      onPressed: () {},
-                      child: Text(strings['signup']!),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }
