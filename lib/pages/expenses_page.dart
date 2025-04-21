@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class ExpensesPage extends StatefulWidget {
   final Language lang;
@@ -64,10 +66,14 @@ class _ExpensesPageState extends State<ExpensesPage> {
 
   Future<void> _showExpenseDialog({Map<String, dynamic>? expense}) async {
     final isEditing = expense != null;
+    final localeTag = widget.lang == Language.pt ? 'pt_BR' : 'en_US';
+    final fmt = NumberFormat.decimalPattern(localeTag);
     final descController = TextEditingController(
         text: expense != null ? expense['description'] ?? '' : '');
     final amtController = TextEditingController(
-        text: expense != null ? expense['amount'].toString() : '');
+        text: expense != null
+            ? fmt.format((expense['amount'] as num).toDouble())
+            : '');
     DateTime expenseDate = isEditing
         ? DateTime.parse(expense!['expense_date'])
         : DateTime.now();
@@ -98,8 +104,11 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   TextField(
                     controller: amtController,
                     decoration: InputDecoration(labelText: s['amount']!),
-                    keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
@@ -171,13 +180,46 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   child: Text(s['cancel']!)),
               ElevatedButton(
                 onPressed: () async {
+                  final raw = amtController.text.trim();
+                  if (raw.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(s['invalid_amount']!)),
+                    );
+                    return;
+                  }
+                  double? amount;
+                  if (widget.lang == Language.pt) {
+                    final pattern = RegExp(r'^\d+(?:\.\d{3})*(?:,\d+)?$');
+                    if (!pattern.hasMatch(raw)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(s['invalid_amount']!)),
+                      );
+                      return;
+                    }
+                    final sanitized = raw.replaceAll('.', '').replaceAll(',', '.');
+                    amount = double.tryParse(sanitized);
+                  } else {
+                    final pattern = RegExp(r'^\d+(?:,\d{3})*(?:\.\d+)?$');
+                    if (!pattern.hasMatch(raw)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(s['invalid_amount']!)),
+                      );
+                      return;
+                    }
+                    final sanitized = raw.replaceAll(',', '');
+                    amount = double.tryParse(sanitized);
+                  }
+                  if (amount == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(s['invalid_amount']!)),
+                    );
+                    return;
+                  }
                   final data = {
                     'description': descController.text,
-                    'amount': double.tryParse(amtController.text) ?? 0.0,
-                    'expense_date':
-                        expenseDate.toIso8601String(),
-                    'effective_date':
-                        effectiveDate.toIso8601String(),
+                    'amount': amount,
+                    'expense_date': expenseDate.toIso8601String(),
+                    'effective_date': effectiveDate.toIso8601String(),
                     'id_category': selectedCategory,
                     'id_type': selectedType,
                     'id_user': _userId,
@@ -249,6 +291,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
   @override
   Widget build(BuildContext context) {
     final s = localizedStrings[widget.lang]!;
+    final localeTag = widget.lang == Language.pt ? 'pt_BR' : 'en_US';
+    final fmt = NumberFormat.decimalPattern(localeTag);
     return Scaffold(
       appBar: AppBar(title: Text(s['expenses']!)),
       body: ListView.separated(
@@ -259,7 +303,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
           return ListTile(
             title: Text(ex['description'] ?? ''),
             subtitle: Text(
-                '${ex['amount']} - ${ex['categories']['name']} / ${ex['types']['name']}'),
+                '${fmt.format((ex['amount'] as num).toDouble())} - ${ex['categories']['name']} / ${ex['types']['name']}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

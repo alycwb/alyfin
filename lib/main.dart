@@ -3,6 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/categories_page.dart';
 import 'pages/types_page.dart';
 import 'pages/expenses_page.dart';
+import 'pages/dashboard_page.dart';
+// RouteObserver para atualização de telas
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +55,12 @@ final localizedStrings = {
     'type': 'Type',
     'expense_date': 'Expense Date',
     'effective_date': 'Effective Date',
+    'this_month': 'This Month',
+    'recent': 'Recent',
+    'top_types': 'Top 2 Expense Types',
+    'top_category': 'Top Category',
+    'invalid_credentials': 'Invalid username or password',
+    'invalid_amount': 'Invalid amount format',
   },
   Language.pt: {
     'title': 'Entrar',
@@ -89,6 +98,12 @@ final localizedStrings = {
     'type': 'Tipo',
     'expense_date': 'Data da Despesa',
     'effective_date': 'Data Efetiva',
+    'this_month': 'Este Mês',
+    'recent': 'Recentes',
+    'top_types': 'Maiores Tipos de Gasto',
+    'top_category': 'Maior Categoria',
+    'invalid_credentials': 'Usuário ou senha inválidos',
+    'invalid_amount': 'Formato de valor inválido',
   },
 };
 
@@ -102,8 +117,17 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Language _lang = Language.en;
   bool _loggedIn = false;
+  bool _obscurePassword = true;
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final TextEditingController _loginEmailController = TextEditingController();
   final TextEditingController _loginPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loginEmailController.text = 'alysson.isidro@gmail.com';
+    _loginPasswordController.text = 'Pass.135';
+  }
 
   Future<void> _showSignUpDialog(BuildContext context) async {
     final nameController = TextEditingController();
@@ -138,11 +162,11 @@ class _MyAppState extends State<MyApp> {
                     data: {'full_name': nameController.text},
                   );
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  _scaffoldMessengerKey.currentState?.showSnackBar(
                     const SnackBar(content: Text('Registration successful, check your email')),
                   );
                 } catch (error) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  _scaffoldMessengerKey.currentState?.showSnackBar(
                     SnackBar(content: Text(error.toString())),
                   );
                 }
@@ -159,6 +183,8 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     final strings = localizedStrings[_lang]!;
     return MaterialApp(
+      scaffoldMessengerKey: _scaffoldMessengerKey,
+      navigatorObservers: [routeObserver],
       theme: ThemeData(primarySwatch: Colors.grey),
       debugShowCheckedModeBanner: false,
       title: 'Alysoft Finances',
@@ -188,7 +214,10 @@ class _MyAppState extends State<MyApp> {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                               minimumSize: const Size(double.infinity, 48),
                             ),
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => DashboardPage(lang: _lang)));
+                            },
                             child: Text(s['dashboard']!),
                           ),
                           TextButton(
@@ -347,7 +376,7 @@ class _MyAppState extends State<MyApp> {
           ],
         ),
         body: _loggedIn
-            ? Container()
+            ? DashboardPage(lang: _lang)
             : Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -364,8 +393,14 @@ class _MyAppState extends State<MyApp> {
                         const SizedBox(height: 16),
                         TextField(
                           controller: _loginPasswordController,
-                          decoration: InputDecoration(labelText: strings['password']),
-                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: strings['password']!,
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+                          obscureText: _obscurePassword,
                         ),
                         const SizedBox(height: 12),
                         Align(
@@ -388,8 +423,12 @@ class _MyAppState extends State<MyApp> {
                                 password: _loginPasswordController.text,
                               );
                               setState(() => _loggedIn = true);
+                            } on AuthException catch (_) {
+                              _scaffoldMessengerKey.currentState?.showSnackBar(
+                                SnackBar(content: Text(strings['invalid_credentials']!)),
+                              );
                             } catch (error) {
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              _scaffoldMessengerKey.currentState?.showSnackBar(
                                 SnackBar(content: Text(error.toString())),
                               );
                             }
