@@ -222,21 +222,6 @@ class _MyAppState extends State<MyApp> {
                             ),
                             onPressed: () {
                               Navigator.pop(context);
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => DashboardPage(lang: _lang)));
-                            },
-                            child: Text(s['dashboard']!),
-                          ),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              overlayColor: Colors.grey.shade300,
-                              alignment: Alignment.centerLeft,
-                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                              minimumSize: const Size(double.infinity, 48),
-                            ),
-                            onPressed: () {
-                              Navigator.pop(context);
                               Navigator.push(context, MaterialPageRoute(builder: (_) => ExpensesPage(lang: _lang)));
                             },
                             child: Text(s['expenses']!),

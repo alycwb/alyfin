@@ -223,19 +223,21 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _recentExpenses.length,
-            separatorBuilder: (_, __) => const Divider(),
-            itemBuilder: (_, i) {
-              final e = _recentExpenses[i];
-              return ListTile(
-                title: Text(e['description'] ?? ''),
-                subtitle: Text('${e['categories']['name']} / ${e['types']['name']}'),
-                trailing: Text(fmt.format((e['amount'] as num).toDouble())),
-              );
-            },
+          Material(
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _recentExpenses.length,
+              separatorBuilder: (_, __) => const Divider(),
+              itemBuilder: (_, i) {
+                final e = _recentExpenses[i];
+                return ListTile(
+                  title: Text(e['description'] ?? ''),
+                  subtitle: Text('${e['categories']['name']} / ${e['types']['name']}'),
+                  trailing: Text(fmt.format((e['amount'] as num).toDouble())),
+                );
+              },
+            ),
           ),
         ],
       ),
