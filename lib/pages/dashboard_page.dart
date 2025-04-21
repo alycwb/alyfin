@@ -113,8 +113,29 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
       return Center(child: CircularProgressIndicator());
     }
     final s = localizedStrings[widget.lang]!;
-    final localeTag = widget.lang == Language.pt ? 'pt_BR' : 'en_US';
-    final fmt = NumberFormat.decimalPattern(localeTag);
+    final fmt = NumberFormat.decimalPattern(widget.lang == Language.pt ? 'pt_BR' : 'en_US');
+
+    if (_recentExpenses.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Text(s['no_expenses']!, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ExpensesPage(lang: widget.lang)),
+              ),
+              child: Text(s['add_expense']!),
+            ),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -123,7 +144,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
           // Dashboard summary cards
           Row(
             children: [
-              if (_topTypes.length > 0)
+              if (_topTypes.isNotEmpty)
                 Expanded(
                   child: Card(
                     child: Padding(
@@ -134,8 +155,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                           const SizedBox(height: 4),
                           Text(
                             fmt.format((_topTypes[0]['amount'] as num).toDouble()),
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -153,8 +173,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                           const SizedBox(height: 4),
                           Text(
                             fmt.format((_topTypes[1]['amount'] as num).toDouble()),
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -171,8 +190,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                         const SizedBox(height: 4),
                         Text(
                           fmt.format(_topCategoryAmount),
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -189,8 +207,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                         const SizedBox(height: 4),
                         Text(
                           fmt.format(_totalThisMonth),
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -200,43 +217,26 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
             ],
           ),
           const SizedBox(height: 24),
-          if (_recentExpenses.isEmpty)
-            Column(
-              children: [
-                Text(s['no_expenses']!, textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => ExpensesPage(lang: widget.lang))),
-                  child: Text(s['add_expense']!),
-                ),
-                const SizedBox(height: 24),
-              ],
-            )
-          else ...[
-            // Título de recentes
-            Text(
-              s['recent']!,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _recentExpenses.length,
-              separatorBuilder: (_, __) => const Divider(),
-              itemBuilder: (_, i) {
-                final e = _recentExpenses[i];
-                return ListTile(
-                  title: Text(e['description'] ?? ''),
-                  subtitle: Text('${e['categories']['name']} / ${e['types']['name']}'),
-                  trailing: Text(fmt.format((e['amount'] as num).toDouble())),
-                );
-              },
-            ),
-          ],
+          // Recent section
+          Text(
+            s['recent']!,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _recentExpenses.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (_, i) {
+              final e = _recentExpenses[i];
+              return ListTile(
+                title: Text(e['description'] ?? ''),
+                subtitle: Text('${e['categories']['name']} / ${e['types']['name']}'),
+                trailing: Text(fmt.format((e['amount'] as num).toDouble())),
+              );
+            },
+          ),
         ],
       ),
     );
