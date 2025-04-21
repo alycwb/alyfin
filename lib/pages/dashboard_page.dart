@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
+import 'expenses_page.dart';
 import 'package:intl/intl.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -17,6 +18,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   List<Map<String, dynamic>> _topTypes = [];
   String _topCategoryName = '';
   double _topCategoryAmount = 0.0;
+  bool _loading = true;
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   }
 
   Future<void> _loadData() async {
+    setState(() => _loading = true);
     final user = Supabase.instance.client.auth.currentUser;
     final userId = user?.id ?? '';
     final now = DateTime.now();
@@ -94,8 +97,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
         _topTypes = topTypesList;
         _topCategoryName = topCatEntry.key;
         _topCategoryAmount = topCatEntry.value;
+        _loading = false;
       });
     } catch (error) {
+      setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.toString())),
       );
@@ -104,6 +109,9 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return Center(child: CircularProgressIndicator());
+    }
     final s = localizedStrings[widget.lang]!;
     final localeTag = widget.lang == Language.pt ? 'pt_BR' : 'en_US';
     final fmt = NumberFormat.decimalPattern(localeTag);
@@ -192,26 +200,43 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
             ],
           ),
           const SizedBox(height: 24),
-          // Título de recentes
-          Text(
-            s['recent']!,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _recentExpenses.length,
-            separatorBuilder: (_, __) => const Divider(),
-            itemBuilder: (_, i) {
-              final e = _recentExpenses[i];
-              return ListTile(
-                title: Text(e['description'] ?? ''),
-                subtitle: Text('${e['categories']['name']} / ${e['types']['name']}'),
-                trailing: Text(fmt.format((e['amount'] as num).toDouble())),
-              );
-            },
-          ),
+          if (_recentExpenses.isEmpty)
+            Column(
+              children: [
+                Text(s['no_expenses']!, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => ExpensesPage(lang: widget.lang))),
+                  child: Text(s['add_expense']!),
+                ),
+                const SizedBox(height: 24),
+              ],
+            )
+          else ...[
+            // Título de recentes
+            Text(
+              s['recent']!,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _recentExpenses.length,
+              separatorBuilder: (_, __) => const Divider(),
+              itemBuilder: (_, i) {
+                final e = _recentExpenses[i];
+                return ListTile(
+                  title: Text(e['description'] ?? ''),
+                  subtitle: Text('${e['categories']['name']} / ${e['types']['name']}'),
+                  trailing: Text(fmt.format((e['amount'] as num).toDouble())),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );

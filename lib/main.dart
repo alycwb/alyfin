@@ -61,6 +61,9 @@ final localizedStrings = {
     'top_category': 'Top Category',
     'invalid_credentials': 'Invalid username or password',
     'invalid_amount': 'Invalid amount format',
+    'email_not_confirmed': 'Email not confirmed',
+    'no_expenses': 'No expenses found',
+    'add_expense': 'Add Expense',
   },
   Language.pt: {
     'title': 'Entrar',
@@ -104,6 +107,9 @@ final localizedStrings = {
     'top_category': 'Maior Categoria',
     'invalid_credentials': 'Usuário ou senha inválidos',
     'invalid_amount': 'Formato de valor inválido',
+    'email_not_confirmed': 'Email não confirmado',
+    'no_expenses': 'Nenhuma despesa encontrada',
+    'add_expense': 'Adicionar Despesa',
   },
 };
 
@@ -423,9 +429,13 @@ class _MyAppState extends State<MyApp> {
                                 password: _loginPasswordController.text,
                               );
                               setState(() => _loggedIn = true);
-                            } on AuthException catch (_) {
+                            } on AuthException catch (e) {
+                              final msg = e.message.toLowerCase();
+                              final key = msg.contains('not confirmed')
+                                  ? 'email_not_confirmed'
+                                  : 'invalid_credentials';
                               _scaffoldMessengerKey.currentState?.showSnackBar(
-                                SnackBar(content: Text(strings['invalid_credentials']!)),
+                                SnackBar(content: Text(strings[key]!)),
                               );
                             } catch (error) {
                               _scaffoldMessengerKey.currentState?.showSnackBar(
